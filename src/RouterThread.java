@@ -54,7 +54,7 @@ public class RouterThread extends Thread
 		ThisRouter = new Node( Name, socket.getLocalAddress().toString(), Port );
 
 		// Read the link file
-		ReadLinkFile();
+		UpdateLinks();
 	}
 
 	
@@ -99,10 +99,10 @@ public class RouterThread extends Thread
 				
 				// Deserialize the packet data into a routes list
 				@SuppressWarnings("unchecked")
-				ArrayList<Route> RecevedRoutes = (ArrayList<Route>)FileUtilities.fromString( new String( packet.getData(), 0, packet.getLength() ) );
+				ArrayList<Route> ReceivedRoutes = (ArrayList<Route>)FileUtilities.fromString( new String( packet.getData(), 0, packet.getLength() ) );
 				
-				// TODO: Perform distance vector algorithm to update routing list
-				
+				// Update the Routes list
+				UpdateRoutes( ReceivedRoutes );
 			}
 
 			catch( IOException | ClassNotFoundException e )
@@ -126,7 +126,7 @@ public class RouterThread extends Thread
 		System.out.println("Broadcast number " + BroadcastNumber);
 		
 		// Read the link file
-		ReadLinkFile();
+		UpdateLinks();
 		
 		// Serialize the list of routes
 		String RoutesString = FileUtilities.toString( Routes );
@@ -152,13 +152,23 @@ public class RouterThread extends Thread
 		System.out.println( "Broadcast complete" );
 		System.out.println( "" );
 	}
+	
+	
+	
+	/*
+	 * Updates the Routes list with information from the new routes.
+	 */
+	protected void UpdateRoutes( ArrayList<Route> NewRoutes )
+	{
+		// TODO: Perform distance vector algorithm to update routing list
+	}
 
 	
 	
 	/*
 	 * Reads the link file and updates the list of links and routes.
 	 */
-	protected void ReadLinkFile() throws IOException
+	protected void UpdateLinks() throws IOException
 	{
 		System.out.print("Updating links from file... ");
 
