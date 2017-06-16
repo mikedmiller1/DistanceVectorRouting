@@ -97,10 +97,15 @@ public class RouterThread extends Thread
 				socket.receive( packet );
 				
 				
+				// Deserialize the packet data into a routes list
+				@SuppressWarnings("unchecked")
+				ArrayList<Route> RecevedRoutes = (ArrayList<Route>)FileUtilities.fromString( new String( packet.getData(), 0, packet.getLength() ) );
+				
+				// TODO: Perform distance vector algorithm to update routing list
 				
 			}
 
-			catch( IOException e )
+			catch( IOException | ClassNotFoundException e )
 			{
 				e.printStackTrace();
 				//ServerRunning = false;
@@ -208,13 +213,13 @@ public class RouterThread extends Thread
 	 * Returns the route to the specified destination router name.
 	 * If no route is found, returns null.
 	 */
-	Route FindRoute( String Name )
+	Route FindRoute( String DestinationName )
 	{
 		// Loop through the routes
 		for( int RouteNum = 0; RouteNum < Routes.size(); RouteNum++ )
 		{
 			// If the current route destination name matches the search name, return the route
-			if( Routes.get( RouteNum ).Destination.Name.equals( Name ) )
+			if( Routes.get( RouteNum ).Destination.Name.equals( DestinationName ) )
 			{
 				return Routes.get( RouteNum );
 			}
