@@ -16,6 +16,7 @@ public class RouterThread extends Thread
 	protected BufferedReader LinkFileReader = null;
 	protected boolean ServerRunning = true;
 	protected ArrayList<Link> Links = new ArrayList<Link>();
+	protected ArrayList<Route> Routes = new ArrayList<Route>();
 	public int BroadcastInterval;
 	protected Timer BroadcastTimer;
 	protected int BroadcastNumber = 0;
@@ -27,7 +28,7 @@ public class RouterThread extends Thread
 	 */
 	public RouterThread() throws IOException
 	{
-		this( "ServerThread", -1, "" );
+		this( "", 0, "" );
 	}
 
 	
@@ -127,12 +128,12 @@ public class RouterThread extends Thread
 			Link CurrentRoute = Links.get( RouteNum );
 			
 			// Send the link list to the current router
-			System.out.print( "Sending to " + CurrentRoute.Name + " at " + CurrentRoute.IpAddress + ":" + CurrentRoute.Port + "... " );
+			System.out.print( "Sending to " + CurrentRoute.Node.Name + " at " + CurrentRoute.Node.IpAddress + ":" + CurrentRoute.Node.Port + "... " );
 			DatagramPacket packet = new DatagramPacket(
 					RoutesString.getBytes(),
 					RoutesString.length(),
-					InetAddress.getByName( CurrentRoute.IpAddress ),
-					CurrentRoute.Port );
+					InetAddress.getByName( CurrentRoute.Node.IpAddress ),
+					CurrentRoute.Node.Port );
 			socket.send( packet );
 			System.out.println( "Done" );
 		}
