@@ -56,4 +56,12 @@ public class Route implements Serializable
 	{
 		return new Route( this );
 	}
+	
+	
+	
+	@Override
+	public String toString()
+	{
+		return "Shortest path " + Source + "-" + Destination + ": the next hop is " + NextRouter + " and the cost is " + Cost;
+	}
 }
