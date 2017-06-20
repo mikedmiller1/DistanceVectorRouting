@@ -178,7 +178,7 @@ public class RouterThread extends Thread
 					routeAdd.NextRouter = routeToSource.Destination;
 					Routes.add(routeAdd);
 					System.out.println("New Route added");
-					//System.out.println("Shotest path "+ ThisRouter.Name +"-"+ routeAdd.Destination.Name +": the next hop is "+routeAdd.NextRouter.);
+					System.out.println(routeAdd);
 				}else{
 					
 					oldCost = oldRoute.Cost;
