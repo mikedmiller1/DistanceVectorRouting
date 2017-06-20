@@ -52,7 +52,7 @@ public class RouterThread extends Thread
 		
 		// Create the node for this router
 		ThisRouter = new Node( Name, socket.getLocalAddress().toString(), Port );
-
+		
 		// Read the link file
 		UpdateLinks();
 	}
@@ -100,12 +100,13 @@ public class RouterThread extends Thread
 				// Deserialize the packet data into a routes list
 				@SuppressWarnings("unchecked")
 				ArrayList<Route> ReceivedRoutes = (ArrayList<Route>)FileUtilities.fromString( new String( packet.getData(), 0, packet.getLength() ) );
+				System.out.println(ReceivedRoutes.toString());
 				
 				// Update the Routes list
 				UpdateRoutes( ReceivedRoutes );
 			}
 
-			catch( IOException | ClassNotFoundException e )
+			catch( IOException | ClassNotFoundException e)
 			{
 				e.printStackTrace();
 				//ServerRunning = false;
@@ -161,7 +162,43 @@ public class RouterThread extends Thread
 	protected void UpdateRoutes( ArrayList<Route> NewRoutes )
 	{
 		// TODO: Perform distance vector algorithm to update routing list
-	}
+		double oldCost, newCost;
+		for(int newRoute = 0; newRoute < NewRoutes.size(); newRoute++){
+			
+				Route oldRoute = FindRoute(NewRoutes.get(newRoute).Destination.Name);
+				Route routeToSource = FindRoute(NewRoutes.get(newRoute).Source.Name);
+				newCost = routeToSource.Cost + NewRoutes.get(newRoute).Cost;
+				
+				if(oldRoute == null){
+					Route routeAdd = new Route();
+					
+					routeAdd.Cost = newCost;
+					routeAdd.Source = ThisRouter;
+					routeAdd.Destination = NewRoutes.get(newRoute).Destination;
+					routeAdd.NextRouter = routeToSource.Destination;
+					Routes.add(routeAdd);
+					System.out.println("New Route added");
+					//System.out.println("Shotest path "+ ThisRouter.Name +"-"+ routeAdd.Destination.Name +": the next hop is "+routeAdd.NextRouter.);
+				}else{
+					
+					oldCost = oldRoute.Cost;
+					if(newCost < oldCost){
+						
+						
+						oldRoute.Cost = newCost;
+						oldRoute.NextRouter = NewRoutes.get(newRoute).Destination;
+						
+					}
+					
+			
+				}
+				
+				
+			}
+			
+			
+		}
+	
 
 	
 	
