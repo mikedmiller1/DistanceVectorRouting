@@ -31,4 +31,18 @@ public class Node implements Serializable
 		this.IpAddress = IpAddress;
 		this.Port = Port;
 	}
+	
+	
+	
+	/*
+	 * Override of default toString()
+	 * Returns the node name.
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		return this.Name;
+	}
 }
