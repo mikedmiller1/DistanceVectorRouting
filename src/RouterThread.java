@@ -148,8 +148,11 @@ public class RouterThread extends Thread
 			// Create a copy of the routes
 			ArrayList<Route> RoutesToSend = new ArrayList<Route>( Routes );
 			
+			// Remove the first route (this is the current router's path to itself)
+			RoutesToSend.remove( 0 );
+			
 			// Perform poisoned reverse on routes to the current link
-			RoutesToSend = PoisonedReverse( RoutesToSend, CurrentLink);
+			//RoutesToSend = PoisonedReverse( RoutesToSend, CurrentLink);
 			
 			// Serialize the list of routes
 			String RoutesString = FileUtilities.toString( RoutesToSend );
@@ -215,6 +218,7 @@ public class RouterThread extends Thread
 			{
 				// Get the existing route cost
 				oldCost = oldRoute.Cost;
+				System.out.println( "Existing route cost is " + oldCost + ", new route cost is " + newCost );
 				
 				// If the new cost is less than the existing cost
 				if( newCost < oldCost )
@@ -228,10 +232,12 @@ public class RouterThread extends Thread
 				// Otherwise, the existing route cost is better
 				else
 				{
-					System.out.println( "Existing route cost is better, no update performed" );
+					System.out.println( "Existing route cost is equal or better, no update performed" );
 				}
 			}
-		}	
+		}
+		System.out.println( "Updating routes complete" );
+		System.out.println();
 	}
 	
 	

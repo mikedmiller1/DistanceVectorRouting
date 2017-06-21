@@ -12,7 +12,8 @@ public class Router
     	int Port = Integer.parseInt( args[ 2 ] );
     	
     	// Create a new router and start it
-    	RouterThread s = new RouterThread( RouterName, Port, LinkFilename );
+        System.out.println( "Router name: " + RouterName );
+        RouterThread s = new RouterThread( RouterName, Port, LinkFilename );
         s.BroadcastInterval = 15000;
         s.start();
     }
