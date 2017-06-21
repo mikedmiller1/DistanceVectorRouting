@@ -134,6 +134,9 @@ public class RouterThread extends Thread
 		BroadcastNumber++;
 		System.out.println("Broadcast number " + BroadcastNumber);
 		
+		// Print the current routing table
+		PrintRoutingTable();
+		
 		// Read the link file
 		UpdateLinks();
 		
@@ -246,6 +249,10 @@ public class RouterThread extends Thread
 		System.out.println( "Updating routes complete" );
 		System.out.println();
 		
+		// Print the current routing table
+		PrintRoutingTable();
+		
+		
 		// Check if a better route was found during the updates
 		if( BetterRouteFound )
 		{
@@ -313,13 +320,21 @@ public class RouterThread extends Thread
 			
 			// Check if there is already a route to the link
 			Route CurrentRoute = FindRoute( NewLink.Node.Name );
+			/*
+			// If there is an existing route and the route cost is more than the link cost
+			if( CurrentRoute != null && NewLink.Cost < CurrentRoute.Cost )
+			{
+				// Update the route
+				CurrentRoute.NextRouter = NewLink.Node;
+				CurrentRoute.Cost = NewLink.Cost;
+			}
+			*/
 			
 			// If there is, update the route
 			if( CurrentRoute != null )
 			{
 				CurrentRoute.Cost = NewLink.Cost;
 			}
-			
 			// Otherwise, create a new route
 			else
 			{
@@ -400,5 +415,24 @@ public class RouterThread extends Thread
 		
 		// If we get here, the link was not found
 		return null;
+	}
+	
+	
+	
+	/*
+	 * Prints the current routing list
+	 */
+	public void PrintRoutingTable()
+	{
+		System.out.println( "" );
+		System.out.println( "***** Routing Table *****" );
+
+		// Loop through the routes
+		for( int RouteNum = 0; RouteNum < Routes.size(); RouteNum++ )
+		{
+			// Print the current route
+			System.out.println( Routes.get( RouteNum ) );
+		}
+		System.out.println( "" );	
 	}
 }
