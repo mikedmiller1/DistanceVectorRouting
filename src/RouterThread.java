@@ -53,6 +53,9 @@ public class RouterThread extends Thread
 		// Create the node for this router
 		ThisRouter = new Node( Name, socket.getLocalAddress().toString(), Port );
 		
+		// Add a route to this router with a cost 0
+		Routes.add( new Route( ThisRouter, ThisRouter, ThisRouter, 0.0 ) );
+		
 		// Read the link file
 		UpdateLinks();
 	}
