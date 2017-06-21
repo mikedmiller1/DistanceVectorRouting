@@ -103,7 +103,7 @@ public class RouterThread extends Thread
 				// Deserialize the packet data into a routes list
 				@SuppressWarnings("unchecked")
 				ArrayList<Route> ReceivedRoutes = (ArrayList<Route>)FileUtilities.fromString( new String( packet.getData(), 0, packet.getLength() ) );
-				System.out.println(ReceivedRoutes.toString());
+				
 				
 				// Update the Routes list
 				UpdateRoutes( ReceivedRoutes );
