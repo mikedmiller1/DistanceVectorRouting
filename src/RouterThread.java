@@ -211,7 +211,7 @@ public class RouterThread extends Thread
 				routeAdd.Cost = newCost;
 				routeAdd.Source = ThisRouter;
 				routeAdd.Destination = CurrentNewRoute.Destination;
-				routeAdd.NextRouter = routeToSource.Destination;
+				routeAdd.NextRouter = routeToSource.Destination; 
 				Routes.add( routeAdd );
 				System.out.println("Added new route: " + routeAdd );
 			}
@@ -229,7 +229,7 @@ public class RouterThread extends Thread
 				{
 					// Update the existing route to use the new route
 					oldRoute.Cost = newCost;
-					oldRoute.NextRouter = NewRoutes.get(newRouteNum).Destination;
+					oldRoute.NextRouter = CurrentNewRoute.Source;
 					System.out.println( "Updated existing route: " + oldRoute );
 				}
 				
@@ -312,7 +312,12 @@ public class RouterThread extends Thread
 			if( RouteList.get( RouteNum ).NextRouter.Name.equals( CurrentLink.Node.Name ) )
 			{
 				// Set the route cost to 16 (poisoned reverse)
-				RouteList.get( RouteNum ).Cost = 16.0;
+				// Only if the node follows another path to reach the destination and does not directly reach the destination
+				if( ! (RouteList.get( RouteNum ).NextRouter.Name.equals( RouteList.get( RouteNum ).Destination.Name ) ) ){
+					//RouteList.get( RouteNum ).Cost = 16.0;
+					// the route cost to reach directly to the destination is set to 16.0
+					RouteList.add(new Route(ThisRouter, RouteList.get( RouteNum ).Destination, RouteList.get( RouteNum ).Destination, 16.0));
+				}
 			}					
 		}
 		
