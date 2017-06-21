@@ -181,10 +181,11 @@ public class RouterThread extends Thread
 	/*
 	 * Updates the Routes list with information from the new routes.
 	 */
-	protected void UpdateRoutes( ArrayList<Route> NewRoutes )
+	protected void UpdateRoutes( ArrayList<Route> NewRoutes ) throws IOException
 	{
 		System.out.println( "Updating routes" );
 		double oldCost, newCost;
+		boolean BetterRouteFound = false;
 		
 		// Loop through the new routes
 		for( int newRouteNum = 0; newRouteNum < NewRoutes.size(); newRouteNum++ )
@@ -213,6 +214,7 @@ public class RouterThread extends Thread
 				routeAdd.Destination = CurrentNewRoute.Destination;
 				routeAdd.NextRouter = routeToSource.Destination; 
 				Routes.add( routeAdd );
+				BetterRouteFound = true;
 				System.out.println("Added new route: " + routeAdd );
 			}
 			
@@ -230,6 +232,7 @@ public class RouterThread extends Thread
 					// Update the existing route to use the new route
 					oldRoute.Cost = newCost;
 					oldRoute.NextRouter = CurrentNewRoute.Source;
+					BetterRouteFound = true;
 					System.out.println( "Updated existing route: " + oldRoute );
 				}
 				
@@ -242,6 +245,36 @@ public class RouterThread extends Thread
 		}
 		System.out.println( "Updating routes complete" );
 		System.out.println();
+		
+		// Check if a better route was found during the updates
+		if( BetterRouteFound )
+		{
+			// If so, immediately send a broadcast
+			System.out.println( "Better route found, sending broadcast" );
+			Broadcast();
+			
+			// Reset the timer
+			BroadcastTimer.cancel();
+			BroadcastTimer = new Timer();
+			BroadcastTimer.scheduleAtFixedRate(
+				new TimerTask()
+				{
+					@Override
+					public void run()
+					{
+						try
+						{
+							Broadcast();
+						}
+						catch( IOException e )
+						{
+							e.printStackTrace();
+						}
+					}
+				},
+				BroadcastInterval,
+				BroadcastInterval);
+		}
 	}
 	
 	
