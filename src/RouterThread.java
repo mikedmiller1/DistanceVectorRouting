@@ -3,7 +3,7 @@ import java.net.*;
 import java.util.*;
 
 /**
- * @author Mike Miller
+ * @author Mike Miller, Neha Dalvi
  *
  */
 public class RouterThread extends Thread
@@ -62,6 +62,11 @@ public class RouterThread extends Thread
 
 	
 	
+	/*
+	 * Called when the Start() method is run.
+	 * (non-Javadoc)
+	 * @see java.lang.Thread#run()
+	 */
 	public void run()
 	{
 		// Initialize the broadcast timer
@@ -98,7 +103,7 @@ public class RouterThread extends Thread
 				// Receive the packet
 				DatagramPacket packet = new DatagramPacket( ReceivedData, ReceivedData.length );
 				socket.receive( packet );
-				
+				System.out.println( "Route list received" );
 				
 				// Deserialize the packet data into a routes list
 				@SuppressWarnings("unchecked")
@@ -143,7 +148,7 @@ public class RouterThread extends Thread
 			// Create a copy of the routes
 			ArrayList<Route> RoutesToSend = new ArrayList<Route>( Routes );
 			
-			// Perform poisoned reverse on routes to adjacent links
+			// Perform poisoned reverse on routes to the current link
 			RoutesToSend = PoisonedReverse( RoutesToSend, CurrentLink);
 			
 			// Serialize the list of routes
@@ -171,45 +176,64 @@ public class RouterThread extends Thread
 	 */
 	protected void UpdateRoutes( ArrayList<Route> NewRoutes )
 	{
-		// TODO: Perform distance vector algorithm to update routing list
+		System.out.println( "Updating routes" );
 		double oldCost, newCost;
-		for(int newRoute = 0; newRoute < NewRoutes.size(); newRoute++){
+		
+		// Loop through the new routes
+		for( int newRouteNum = 0; newRouteNum < NewRoutes.size(); newRouteNum++ )
+		{
+			// Get the current new route
+			Route CurrentNewRoute = NewRoutes.get( newRouteNum );
+			System.out.println( "Evaluating route: " + CurrentNewRoute );
 			
-				Route oldRoute = FindRoute(NewRoutes.get(newRoute).Destination.Name);
-				Route routeToSource = FindRoute(NewRoutes.get(newRoute).Source.Name);
-				newCost = routeToSource.Cost + NewRoutes.get(newRoute).Cost;
-				
-				if(oldRoute == null){
-					Route routeAdd = new Route();
-					
-					routeAdd.Cost = newCost;
-					routeAdd.Source = ThisRouter;
-					routeAdd.Destination = NewRoutes.get(newRoute).Destination;
-					routeAdd.NextRouter = routeToSource.Destination;
-					Routes.add(routeAdd);
-					System.out.println("New Route added");
-					System.out.println(routeAdd);
-				}else{
-					
-					oldCost = oldRoute.Cost;
-					if(newCost < oldCost){
-						
-						
-						oldRoute.Cost = newCost;
-						oldRoute.NextRouter = NewRoutes.get(newRoute).Destination;
-						
-					}
-					
+			// Search for an existing route to the destination in the new route
+			Route oldRoute = FindRoute( CurrentNewRoute.Destination.Name );
 			
-				}
-				
-				
+			// Get the existing route to the new route source router
+			Route routeToSource = FindRoute( CurrentNewRoute.Source.Name );
+			
+			// Calculate the new route cost
+			newCost = routeToSource.Cost + CurrentNewRoute.Cost;
+			
+			
+			// If an existing route to the destination was not found
+			if(oldRoute == null)
+			{
+				// Add the new route
+				Route routeAdd = new Route();				
+				routeAdd.Cost = newCost;
+				routeAdd.Source = ThisRouter;
+				routeAdd.Destination = CurrentNewRoute.Destination;
+				routeAdd.NextRouter = routeToSource.Destination;
+				Routes.add( routeAdd );
+				System.out.println("Added new route: " + routeAdd );
 			}
 			
 			
-		}
+			// Otherwise, evaluate the new route compared to the existing route
+			else
+			{
+				// Get the existing route cost
+				oldCost = oldRoute.Cost;
+				
+				// If the new cost is less than the existing cost
+				if( newCost < oldCost )
+				{
+					// Update the existing route to use the new route
+					oldRoute.Cost = newCost;
+					oldRoute.NextRouter = NewRoutes.get(newRouteNum).Destination;
+					System.out.println( "Updated existing route: " + oldRoute );
+				}
+				
+				// Otherwise, the existing route cost is better
+				else
+				{
+					System.out.println( "Existing route cost is better, no update performed" );
+				}
+			}
+		}	
+	}
 	
-
 	
 	
 	/*
@@ -266,6 +290,9 @@ public class RouterThread extends Thread
 	
 	
 	
+	/*
+	 * Adjusts the cost of routes to perform poisoned reverse to the specified link.
+	 */
 	ArrayList<Route> PoisonedReverse( ArrayList<Route> RouteList, Link CurrentLink )
 	{
 		// Loop through the routes
