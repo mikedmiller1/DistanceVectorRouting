@@ -257,7 +257,7 @@ public class RouterThread extends Thread
 	
 	
 	/*
-	 * Returns the route to the specified destination router name.
+	 * Returns the route stored in Routes to the specified destination router name.
 	 * If no route is found, returns null.
 	 */
 	Route FindRoute( String DestinationName )
@@ -273,6 +273,28 @@ public class RouterThread extends Thread
 		}
 		
 		// If we get here, the route was not found
+		return null;
+	}
+	
+	
+	
+	/*
+	 * Returns the link stored in Links matching the specified name.
+	 * If no link is found, returns null.
+	 */
+	Link FindLink( String LinkName )
+	{
+		// Loop through the links
+		for( int LinkNum = 0; LinkNum < Links.size(); LinkNum++ )
+		{
+			// If the current link name matches the search name, return the link
+			if( Links.get( LinkNum ).Node.Name.equals( LinkName ) )
+			{
+				return Links.get( LinkNum );
+			}
+		}
+		
+		// If we get here, the link was not found
 		return null;
 	}
 }
