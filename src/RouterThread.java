@@ -132,9 +132,6 @@ public class RouterThread extends Thread
 		// Read the link file
 		UpdateLinks();
 		
-		// Serialize the list of routes
-		String RoutesString = FileUtilities.toString( Routes );
-		
 		
 		// Loop through the links
 		System.out.println( "Sending to " + Links.size() + " nodes" );
@@ -142,6 +139,16 @@ public class RouterThread extends Thread
 		{
 			// Get the current link
 			Link CurrentLink = Links.get( RouteNum );
+			
+			// Create a copy of the routes
+			ArrayList<Route> RoutesToSend = new ArrayList<Route>( Routes );
+			
+			// Perform poisoned reverse on routes to adjacent links
+			RoutesToSend = PoisonedReverse( RoutesToSend, CurrentLink);
+			
+			// Serialize the list of routes
+			String RoutesString = FileUtilities.toString( RoutesToSend );
+			
 			
 			// Send the route list to the current link
 			System.out.print( "Sending to " + CurrentLink.Node.Name + " at " + CurrentLink.Node.IpAddress + ":" + CurrentLink.Node.Port + "... " );
@@ -255,6 +262,25 @@ public class RouterThread extends Thread
 
 		System.out.println("Done");
 		System.out.println("Found " + NumberOfLinks + " links");
+	}
+	
+	
+	
+	ArrayList<Route> PoisonedReverse( ArrayList<Route> RouteList, Link CurrentLink )
+	{
+		// Loop through the routes
+		for( int RouteNum = 0; RouteNum < RouteList.size(); RouteNum++ )
+		{			
+			// If the current route next hop is a link node
+			if( RouteList.get( RouteNum ).NextRouter.Name.equals( CurrentLink.Node.Name ) )
+			{
+				// Set the route cost to 16 (poisoned reverse)
+				RouteList.get( RouteNum ).Cost = 16.0;
+			}					
+		}
+		
+		// Return the modified routes
+		return RouteList;
 	}
 	
 	
