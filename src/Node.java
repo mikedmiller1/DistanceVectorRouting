@@ -35,6 +35,28 @@ public class Node implements Serializable
 	
 	
 	/*
+	 * Copy constructor
+	 */
+	public Node( Node original )
+	{
+		this.Name = original.Name;
+		this.IpAddress = original.IpAddress;
+		this.Port = original.Port;
+	}
+	
+	
+	
+	/*
+	 * Returns a copy of the object.
+	 */
+	public Node DeepCopy()
+	{
+		return new Node( this );
+	}
+	
+	
+	
+	/*
 	 * Override of default toString()
 	 * Returns the node name.
 	 * (non-Javadoc)

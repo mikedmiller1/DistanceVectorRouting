@@ -41,9 +41,9 @@ public class Route implements Serializable
 	 */
 	public Route( Route original )
 	{
-		this.Source = original.Source;
-		this.Destination = original.Destination;
-		this.NextRouter = original.NextRouter;
+		this.Source = original.Source.DeepCopy();
+		this.Destination = original.Destination.DeepCopy();
+		this.NextRouter = original.NextRouter.DeepCopy();
 		this.Cost = original.Cost;
 	}
 	
