@@ -292,9 +292,9 @@ public class RouterThread extends Thread
 	synchronized protected void UpdateLinks() throws IOException
 	{
 		System.out.print("Updating links from file... ");
-
+		PrintRoutingTable();
 		// Clear the links list
-		Links.clear();
+		//Links.clear();
 
 		// Open the file reader
 		try
@@ -316,9 +316,27 @@ public class RouterThread extends Thread
 		{
 			// Create a new link and add it to the list of links
 			Link NewLink = new Link( LinkFileReader.readLine() );
-			Links.add( NewLink );
 			
-			// Check if there is already a route to the link
+			Link OldLink = FindLink(NewLink.Node.Name);
+			if(OldLink == null){
+				Links.add( NewLink );
+				Route r = new Route(ThisRouter, NewLink.Node, NewLink.Node, NewLink.Cost);
+				Routes.add(r);
+				System.out.println("New Link and Route added "+ r);
+			}
+			else{
+				double difference = NewLink.Cost - OldLink.Cost;
+				System.out.println("Difference: "+difference+" New Link Cost: "+NewLink.Cost);
+				OldLink.Cost = NewLink.Cost;
+				for( int RouteNum = 0; RouteNum < Routes.size(); RouteNum ++ ){
+					if( Routes.get(RouteNum).NextRouter.Name.equals(NewLink.Node.Name)){
+						System.out.println("Cost of Route: "+Routes.get(RouteNum).Cost +" diff: "+difference);
+						Routes.get(RouteNum).Cost = Routes.get(RouteNum).Cost + difference;
+						System.out.println("Updated route cost "+Routes.get(RouteNum));
+					}
+				}
+			}
+			/*// Check if there is already a route to the link
 			Route CurrentRoute = FindRoute( NewLink.Node.Name );
 			
 			// If there is an existing route and the route cost is more than the link cost
@@ -336,11 +354,12 @@ public class RouterThread extends Thread
 			else
 			{
 				Routes.add( new Route( ThisRouter, NewLink.Node, NewLink.Node, NewLink.Cost ) );
-			}
+			}*/
 		}
 
 		System.out.println("Done");
 		System.out.println("Found " + NumberOfLinks + " links");
+		PrintRoutingTable();
 	}
 	
 	
