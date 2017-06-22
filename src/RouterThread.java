@@ -128,7 +128,7 @@ public class RouterThread extends Thread
 	/*
 	 * Sends routing information to all the routers.
 	 */
-	protected void Broadcast() throws IOException
+	synchronized protected void Broadcast() throws IOException
 	{
 		// Increment the broadcast number
 		BroadcastNumber++;
@@ -184,7 +184,7 @@ public class RouterThread extends Thread
 	/*
 	 * Updates the Routes list with information from the new routes.
 	 */
-	protected void UpdateRoutes( ArrayList<Route> NewRoutes ) throws IOException
+	synchronized protected void UpdateRoutes( ArrayList<Route> NewRoutes ) throws IOException
 	{
 		System.out.println( "Updating routes" );
 		double oldCost, newCost;
@@ -289,7 +289,7 @@ public class RouterThread extends Thread
 	/*
 	 * Reads the link file and updates the list of links and routes.
 	 */
-	protected void UpdateLinks() throws IOException
+	synchronized protected void UpdateLinks() throws IOException
 	{
 		System.out.print("Updating links from file... ");
 
@@ -320,21 +320,18 @@ public class RouterThread extends Thread
 			
 			// Check if there is already a route to the link
 			Route CurrentRoute = FindRoute( NewLink.Node.Name );
-			/*
-			// If there is an existing route and the route cost is more than the link cost
-			if( CurrentRoute != null && NewLink.Cost < CurrentRoute.Cost )
-			{
-				// Update the route
-				CurrentRoute.NextRouter = NewLink.Node;
-				CurrentRoute.Cost = NewLink.Cost;
-			}
-			*/
 			
-			// If there is, update the route
+			// If there is an existing route and the route cost is more than the link cost
 			if( CurrentRoute != null )
 			{
-				CurrentRoute.Cost = NewLink.Cost;
+				if( NewLink.Cost < CurrentRoute.Cost )
+				{
+					// Update the route
+					CurrentRoute.NextRouter = NewLink.Node;
+					CurrentRoute.Cost = NewLink.Cost;
+				}
 			}
+			
 			// Otherwise, create a new route
 			else
 			{
@@ -351,7 +348,7 @@ public class RouterThread extends Thread
 	/*
 	 * Adjusts the cost of routes to perform poisoned reverse to the specified link.
 	 */
-	ArrayList<Route> PoisonedReverse( ArrayList<Route> RouteList, Link CurrentLink )
+	protected ArrayList<Route> PoisonedReverse( ArrayList<Route> RouteList, Link CurrentLink )
 	{
 		// Loop through the routes
 		for( int RouteNum = 0; RouteNum < RouteList.size(); RouteNum++ )
@@ -361,9 +358,9 @@ public class RouterThread extends Thread
 			{
 				// Set the route cost to 16 (poisoned reverse)
 				// Only if the node follows another path to reach the destination and does not directly reach the destination
-				if( ! (RouteList.get( RouteNum ).NextRouter.Name.equals( RouteList.get( RouteNum ).Destination.Name ) ) ){
-					//RouteList.get( RouteNum ).Cost = 16.0;
-					// the route cost to reach directly to the destination is set to 16.0
+				if( ! (RouteList.get( RouteNum ).NextRouter.Name.equals( RouteList.get( RouteNum ).Destination.Name ) ) )
+				{
+					// The route cost to reach directly to the destination is set to 16.0
 					RouteList.add(new Route(ThisRouter, RouteList.get( RouteNum ).Destination, RouteList.get( RouteNum ).Destination, 16.0));
 				}
 			}					
@@ -379,7 +376,7 @@ public class RouterThread extends Thread
 	 * Returns the route stored in Routes to the specified destination router name.
 	 * If no route is found, returns null.
 	 */
-	Route FindRoute( String DestinationName )
+	synchronized protected Route FindRoute( String DestinationName )
 	{
 		// Loop through the routes
 		for( int RouteNum = 0; RouteNum < Routes.size(); RouteNum++ )
@@ -401,7 +398,7 @@ public class RouterThread extends Thread
 	 * Returns the link stored in Links matching the specified name.
 	 * If no link is found, returns null.
 	 */
-	Link FindLink( String LinkName )
+	synchronized protected Link FindLink( String LinkName )
 	{
 		// Loop through the links
 		for( int LinkNum = 0; LinkNum < Links.size(); LinkNum++ )
@@ -422,7 +419,7 @@ public class RouterThread extends Thread
 	/*
 	 * Prints the current routing list
 	 */
-	public void PrintRoutingTable()
+	synchronized public void PrintRoutingTable()
 	{
 		System.out.println( "" );
 		System.out.println( "***** Routing Table *****" );
