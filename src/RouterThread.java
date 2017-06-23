@@ -9,17 +9,62 @@ import java.util.*;
 public class RouterThread extends Thread
 {
 	/*
-	 * Properties
+	 * The UDP socket to transmit and receive on.
 	 */
 	protected DatagramSocket socket = null;
+	
+	
+	/*
+	 * The filename of the link data file.
+	 */
 	protected String LinkFilename;
+	
+	
+	/*
+	 * The link data file reader.
+	 */
 	protected BufferedReader LinkFileReader = null;
+	
+	
+	/*
+	 * Flag indicating if the router is running.
+	 */
 	protected boolean ServerRunning = true;
+	
+	
+	/*
+	 * A node for this router.
+	 */
 	protected Node ThisRouter;
+	
+	
+	/*
+	 * The list of links directly connected to this router.
+	 */
 	protected ArrayList<Link> Links = new ArrayList<Link>();
+	
+	
+	/*
+	 * The list of routes known to this router.
+	 */
 	protected ArrayList<Route> Routes = new ArrayList<Route>();
+	
+	
+	/*
+	 * The interval in milliseconds to broadcast route information to neighboring nodes.
+	 */
 	public int BroadcastInterval;
+	
+	
+	/*
+	 * The broadcast timer.
+	 */
 	protected Timer BroadcastTimer;
+	
+	
+	/*
+	 * Counter of the number of broadcasts performed.
+	 */
 	protected int BroadcastNumber = 0;
 
 	
@@ -159,7 +204,7 @@ public class RouterThread extends Thread
 			RoutesToSend.remove( 0 );
 			
 			// Perform poisoned reverse on routes to the current link
-			RoutesToSend = PoisonedReverse( RoutesToSend, CurrentLink);
+			RoutesToSend = PoisonedReverse( RoutesToSend, CurrentLink );
 			
 			// Serialize the list of routes
 			String RoutesString = FileUtilities.toString( RoutesToSend );
@@ -188,7 +233,7 @@ public class RouterThread extends Thread
 	{
 		System.out.println( "***** Updating routes - " + CurrentTime() + " *****" );
 		double oldCost, newCost;
-		boolean BetterRouteFound = false;
+		boolean RouteChanged = false;
 		
 		// Loop through the new routes
 		for( int newRouteNum = 0; newRouteNum < NewRoutes.size(); newRouteNum++ )
@@ -218,7 +263,7 @@ public class RouterThread extends Thread
 				routeAdd.NextRouter = routeToSource.NextRouter; 
 				Routes.add( routeAdd );
 				
-				BetterRouteFound = true;
+				RouteChanged = true;
 				System.out.println("    Added new route: " + routeAdd );
 			}
 			
@@ -236,17 +281,19 @@ public class RouterThread extends Thread
 					// Update the existing route to use the new route
 					oldRoute.Cost = newCost;
 					oldRoute.NextRouter = CurrentNewRoute.Source;
-					BetterRouteFound = true;
+					RouteChanged = true;
 					System.out.println( "    Updated existing route: " + oldRoute );
 				}
-				// If the link cost changes and the node broadcasting this information is the next router for the current node
-				else if( oldRoute.NextRouter.Name.equals(CurrentNewRoute.Source.Name) )
+				
+				// If the node broadcasting this information is the next router for the current node
+				else if( oldRoute.NextRouter.Name.equals( CurrentNewRoute.Source.Name ) )
 				{
-					//update the cost of the old route
+					// Update the cost of the old route
 					double difference = CurrentNewRoute.Cost + routeToSource.Cost - oldRoute.Cost; 
 					oldRoute.Cost = oldRoute.Cost + difference;
-					System.out.println("    Changed cost by "+difference);
+					System.out.println("    Changed cost by " + difference);
 				}
+				
 				// Otherwise, the existing route cost is better
 				else
 				{
@@ -254,6 +301,7 @@ public class RouterThread extends Thread
 				}
 			}
 		}
+		
 		System.out.println( "Updating routes complete" );
 		System.out.println();
 		
@@ -261,11 +309,11 @@ public class RouterThread extends Thread
 		PrintRoutingTable();
 		
 		
-		// Check if a better route was found during the updates
-		if( BetterRouteFound )
+		// Check if a route was changed during the updates
+		if( RouteChanged )
 		{
 			// If so, immediately send a broadcast
-			System.out.println( "Better route found, sending broadcast" );
+			System.out.println( "Routes changed, sending broadcast" );
 			System.out.println();
 			Broadcast();
 			
@@ -300,7 +348,7 @@ public class RouterThread extends Thread
 	 */
 	synchronized protected void UpdateLinks() throws IOException
 	{
-		System.out.print("***** Updating links from file - " + CurrentTime() + " *****" );
+		System.out.println("***** Updating links from file - " + CurrentTime() + " *****" );
 		boolean LinkChanged = false;
 		
 		PrintRoutingTable();
@@ -328,9 +376,13 @@ public class RouterThread extends Thread
 			Link NewLink = new Link( LinkFileReader.readLine() );
 			System.out.println( "Evaluating link: " + NewLink );
 			
+			// Check if a link to the node already exists
 			Link OldLink = FindLink(NewLink.Node.Name);
+			
+			// If there is not currently a link
 			if(OldLink == null)
 			{
+				// Add a new link and route
 				Links.add( NewLink );
 				Route r = new Route(ThisRouter, NewLink.Node, NewLink.Node, NewLink.Cost);
 				Routes.add(r);
@@ -339,24 +391,31 @@ public class RouterThread extends Thread
 			}
 			
 			
+			// Otherwise, a link already exists
 			else
 			{
+				// Calculate the change in cost to the link
 				double difference = NewLink.Cost - OldLink.Cost;
 				
+				// Loop though the routes
 				for( int RouteNum = 0; RouteNum < Routes.size(); RouteNum ++ )
 				{
-					
-					if( Routes.get(RouteNum).NextRouter.Name.equals(NewLink.Node.Name))
+					// If the current route next router is the link node and the cost has changed
+					if( Routes.get(RouteNum).NextRouter.Name.equals(NewLink.Node.Name) && difference != 0 )
 					{
+						// Update the cost of the route with the cost difference
 						System.out.println( "    Found link as next router: " + Routes.get(RouteNum) );
 						Routes.get(RouteNum).Cost = Routes.get(RouteNum).Cost + difference;
 						System.out.println("    Updated existing route: " + Routes.get(RouteNum) );
 					}
 					
+					// If the current route destination is the link node
 					if( Routes.get(RouteNum).Destination.Name.equals(NewLink.Node.Name))
 					{
+						// If the new route cost is less than the  current route cost
 						if(Routes.get(RouteNum).Cost > NewLink.Cost)
 						{
+							// Update the cost and next router of the route
 							System.out.println("    Found link as destination: " + Routes.get(RouteNum) );
 							Routes.get(RouteNum).NextRouter = NewLink.Node;
 							Routes.get(RouteNum).Cost = NewLink.Cost;
@@ -366,8 +425,10 @@ public class RouterThread extends Thread
 					}
 				}
 				
+				// If there was a link cost change
 				if(difference != 0)
 				{
+					// Update the link cost in the link list array
 					System.out.println( "    Link cost changed by " + difference );
 					OldLink.Cost = NewLink.Cost;
 					LinkChanged = true;
@@ -382,7 +443,7 @@ public class RouterThread extends Thread
 		
 		PrintRoutingTable();
 		
-
+		// If there was a link cost change, send a broadcast
 		if( LinkChanged )
 		{
 			System.out.println("Link change found, sending broadcast");
