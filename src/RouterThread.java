@@ -134,6 +134,8 @@ public class RouterThread extends Thread
 		BroadcastNumber++;
 		System.out.println("Broadcast number " + BroadcastNumber);
 		
+		System.out.println(new java.text.SimpleDateFormat("HH:mm:ss.SSS").format(new java.util.Date()));
+		
 		// Print the current routing table
 		PrintRoutingTable();
 		
@@ -187,6 +189,7 @@ public class RouterThread extends Thread
 	synchronized protected void UpdateRoutes( ArrayList<Route> NewRoutes ) throws IOException
 	{
 		System.out.println( "Updating routes" );
+		System.out.println(new java.text.SimpleDateFormat("HH:mm:ss.SSS").format(new java.util.Date()));
 		double oldCost, newCost;
 		boolean BetterRouteFound = false;
 		
@@ -215,7 +218,7 @@ public class RouterThread extends Thread
 				routeAdd.Cost = newCost;
 				routeAdd.Source = ThisRouter;
 				routeAdd.Destination = CurrentNewRoute.Destination;
-				routeAdd.NextRouter = routeToSource.Destination; 
+				routeAdd.NextRouter = routeToSource.NextRouter; 
 				Routes.add( routeAdd );
 				BetterRouteFound = true;
 				System.out.println("Added new route: " + routeAdd );
@@ -238,7 +241,12 @@ public class RouterThread extends Thread
 					BetterRouteFound = true;
 					System.out.println( "Updated existing route: " + oldRoute );
 				}
-				
+				else if( oldRoute.NextRouter.Name.equals(CurrentNewRoute.Source.Name) ){
+					
+						double difference = CurrentNewRoute.Cost + routeToSource.Cost - oldRoute.Cost; 
+						oldRoute.Cost = oldRoute.Cost + difference;
+						System.out.println("Changed cost by "+difference);
+					}
 				// Otherwise, the existing route cost is better
 				else
 				{
@@ -292,6 +300,7 @@ public class RouterThread extends Thread
 	synchronized protected void UpdateLinks() throws IOException
 	{
 		System.out.print("Updating links from file... ");
+		boolean LinkChanged = false;
 		PrintRoutingTable();
 		// Clear the links list
 		//Links.clear();
@@ -323,19 +332,34 @@ public class RouterThread extends Thread
 				Route r = new Route(ThisRouter, NewLink.Node, NewLink.Node, NewLink.Cost);
 				Routes.add(r);
 				System.out.println("New Link and Route added "+ r);
+				LinkChanged = true;
 			}
 			else{
 				double difference = NewLink.Cost - OldLink.Cost;
-				System.out.println("Difference: "+difference+" New Link Cost: "+NewLink.Cost);
-				OldLink.Cost = NewLink.Cost;
 				for( int RouteNum = 0; RouteNum < Routes.size(); RouteNum ++ ){
 					if( Routes.get(RouteNum).NextRouter.Name.equals(NewLink.Node.Name)){
 						System.out.println("Cost of Route: "+Routes.get(RouteNum).Cost +" diff: "+difference);
 						Routes.get(RouteNum).Cost = Routes.get(RouteNum).Cost + difference;
 						System.out.println("Updated route cost "+Routes.get(RouteNum));
 					}
+					if( Routes.get(RouteNum).Destination.Name.equals(NewLink.Node.Name)){
+						if(Routes.get(RouteNum).Cost > NewLink.Cost){
+							Routes.get(RouteNum).NextRouter = NewLink.Node;
+							Routes.get(RouteNum).Cost = NewLink.Cost;
+						}
+							
+					}
+				}
+				
+				if(difference != 0){
+					System.out.println("Difference: "+difference+" New Link Cost: "+NewLink.Cost);
+					OldLink.Cost = NewLink.Cost;
+					
+					LinkChanged = true;
 				}
 			}
+			
+			
 			/*// Check if there is already a route to the link
 			Route CurrentRoute = FindRoute( NewLink.Node.Name );
 			
@@ -356,10 +380,16 @@ public class RouterThread extends Thread
 				Routes.add( new Route( ThisRouter, NewLink.Node, NewLink.Node, NewLink.Cost ) );
 			}*/
 		}
+		
 
 		System.out.println("Done");
 		System.out.println("Found " + NumberOfLinks + " links");
 		PrintRoutingTable();
+		
+
+		if( LinkChanged ){
+			Broadcast();
+		}
 	}
 	
 	
