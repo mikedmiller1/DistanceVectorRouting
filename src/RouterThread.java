@@ -239,8 +239,10 @@ public class RouterThread extends Thread
 					BetterRouteFound = true;
 					System.out.println( "    Updated existing route: " + oldRoute );
 				}
+				// If the link cost changes and the node broadcasting this information is the next router for the current node
 				else if( oldRoute.NextRouter.Name.equals(CurrentNewRoute.Source.Name) )
 				{
+					//update the cost of the old route
 					double difference = CurrentNewRoute.Cost + routeToSource.Cost - oldRoute.Cost; 
 					oldRoute.Cost = oldRoute.Cost + difference;
 					System.out.println("    Changed cost by "+difference);
