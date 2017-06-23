@@ -132,9 +132,7 @@ public class RouterThread extends Thread
 	{
 		// Increment the broadcast number
 		BroadcastNumber++;
-		System.out.println("Broadcast number " + BroadcastNumber);
-		
-		System.out.println(new java.text.SimpleDateFormat("HH:mm:ss.SSS").format(new java.util.Date()));
+		System.out.println("***** Broadcast number " + BroadcastNumber + " - " + CurrentTime() + " *****" );
 		
 		// Print the current routing table
 		PrintRoutingTable();
@@ -168,7 +166,7 @@ public class RouterThread extends Thread
 			
 			
 			// Send the route list to the current link
-			System.out.print( "Sending to " + CurrentLink.Node.Name + " at " + CurrentLink.Node.IpAddress + ":" + CurrentLink.Node.Port + "... " );
+			System.out.print( "    Sending to " + CurrentLink.Node.Name + " at " + CurrentLink.Node.IpAddress + ":" + CurrentLink.Node.Port + "... " );
 			DatagramPacket packet = new DatagramPacket(
 					RoutesString.getBytes(),
 					RoutesString.length(),
@@ -188,8 +186,7 @@ public class RouterThread extends Thread
 	 */
 	synchronized protected void UpdateRoutes( ArrayList<Route> NewRoutes ) throws IOException
 	{
-		System.out.println( "Updating routes" );
-		System.out.println(new java.text.SimpleDateFormat("HH:mm:ss.SSS").format(new java.util.Date()));
+		System.out.println( "***** Updating routes - " + CurrentTime() + " *****" );
 		double oldCost, newCost;
 		boolean BetterRouteFound = false;
 		
@@ -220,8 +217,9 @@ public class RouterThread extends Thread
 				routeAdd.Destination = CurrentNewRoute.Destination;
 				routeAdd.NextRouter = routeToSource.NextRouter; 
 				Routes.add( routeAdd );
+				
 				BetterRouteFound = true;
-				System.out.println("Added new route: " + routeAdd );
+				System.out.println("    Added new route: " + routeAdd );
 			}
 			
 			
@@ -230,7 +228,7 @@ public class RouterThread extends Thread
 			{
 				// Get the existing route cost
 				oldCost = oldRoute.Cost;
-				System.out.println( "Existing route cost is " + oldCost + ", new route cost is " + newCost );
+				System.out.println( "    Existing route cost is " + oldCost + ", new route cost is " + newCost );
 				
 				// If the new cost is less than the existing cost
 				if( newCost < oldCost )
@@ -239,18 +237,18 @@ public class RouterThread extends Thread
 					oldRoute.Cost = newCost;
 					oldRoute.NextRouter = CurrentNewRoute.Source;
 					BetterRouteFound = true;
-					System.out.println( "Updated existing route: " + oldRoute );
+					System.out.println( "    Updated existing route: " + oldRoute );
 				}
-				else if( oldRoute.NextRouter.Name.equals(CurrentNewRoute.Source.Name) ){
-					
-						double difference = CurrentNewRoute.Cost + routeToSource.Cost - oldRoute.Cost; 
-						oldRoute.Cost = oldRoute.Cost + difference;
-						System.out.println("Changed cost by "+difference);
-					}
+				else if( oldRoute.NextRouter.Name.equals(CurrentNewRoute.Source.Name) )
+				{
+					double difference = CurrentNewRoute.Cost + routeToSource.Cost - oldRoute.Cost; 
+					oldRoute.Cost = oldRoute.Cost + difference;
+					System.out.println("    Changed cost by "+difference);
+				}
 				// Otherwise, the existing route cost is better
 				else
 				{
-					System.out.println( "Existing route cost is equal or better, no update performed" );
+					System.out.println( "    Existing route cost is equal or better, no update performed" );
 				}
 			}
 		}
@@ -266,6 +264,7 @@ public class RouterThread extends Thread
 		{
 			// If so, immediately send a broadcast
 			System.out.println( "Better route found, sending broadcast" );
+			System.out.println();
 			Broadcast();
 			
 			// Reset the timer
@@ -299,11 +298,11 @@ public class RouterThread extends Thread
 	 */
 	synchronized protected void UpdateLinks() throws IOException
 	{
-		System.out.print("Updating links from file... ");
+		System.out.print("***** Updating links from file - " + CurrentTime() + " *****" );
 		boolean LinkChanged = false;
+		
 		PrintRoutingTable();
-		// Clear the links list
-		//Links.clear();
+
 
 		// Open the file reader
 		try
@@ -325,69 +324,66 @@ public class RouterThread extends Thread
 		{
 			// Create a new link and add it to the list of links
 			Link NewLink = new Link( LinkFileReader.readLine() );
+			System.out.println( "Evaluating link: " + NewLink );
 			
 			Link OldLink = FindLink(NewLink.Node.Name);
-			if(OldLink == null){
+			if(OldLink == null)
+			{
 				Links.add( NewLink );
 				Route r = new Route(ThisRouter, NewLink.Node, NewLink.Node, NewLink.Cost);
 				Routes.add(r);
-				System.out.println("New Link and Route added "+ r);
+				System.out.println("    Added new link and route: "+ r);
 				LinkChanged = true;
 			}
-			else{
+			
+			
+			else
+			{
 				double difference = NewLink.Cost - OldLink.Cost;
-				for( int RouteNum = 0; RouteNum < Routes.size(); RouteNum ++ ){
-					if( Routes.get(RouteNum).NextRouter.Name.equals(NewLink.Node.Name)){
-						System.out.println("Cost of Route: "+Routes.get(RouteNum).Cost +" diff: "+difference);
+				
+				for( int RouteNum = 0; RouteNum < Routes.size(); RouteNum ++ )
+				{
+					
+					if( Routes.get(RouteNum).NextRouter.Name.equals(NewLink.Node.Name))
+					{
+						System.out.println( "    Found link as next router: " + Routes.get(RouteNum) );
 						Routes.get(RouteNum).Cost = Routes.get(RouteNum).Cost + difference;
-						System.out.println("Updated route cost "+Routes.get(RouteNum));
+						System.out.println("    Updated existing route: " + Routes.get(RouteNum) );
 					}
-					if( Routes.get(RouteNum).Destination.Name.equals(NewLink.Node.Name)){
-						if(Routes.get(RouteNum).Cost > NewLink.Cost){
+					
+					if( Routes.get(RouteNum).Destination.Name.equals(NewLink.Node.Name))
+					{
+						if(Routes.get(RouteNum).Cost > NewLink.Cost)
+						{
+							System.out.println("    Found link as destination: " + Routes.get(RouteNum) );
 							Routes.get(RouteNum).NextRouter = NewLink.Node;
 							Routes.get(RouteNum).Cost = NewLink.Cost;
+							System.out.println("    Updated existing route: " + Routes.get(RouteNum) );
 						}
 							
 					}
 				}
 				
-				if(difference != 0){
-					System.out.println("Difference: "+difference+" New Link Cost: "+NewLink.Cost);
-					OldLink.Cost = NewLink.Cost;
-					
-					LinkChanged = true;
-				}
-			}
-			
-			
-			/*// Check if there is already a route to the link
-			Route CurrentRoute = FindRoute( NewLink.Node.Name );
-			
-			// If there is an existing route and the route cost is more than the link cost
-			if( CurrentRoute != null )
-			{
-				if( NewLink.Cost < CurrentRoute.Cost )
+				if(difference != 0)
 				{
-					// Update the route
-					CurrentRoute.NextRouter = NewLink.Node;
-					CurrentRoute.Cost = NewLink.Cost;
+					System.out.println( "    Link cost changed by " + difference );
+					OldLink.Cost = NewLink.Cost;
+					LinkChanged = true;
+					System.out.println( "    Updated link cost: " + OldLink );
 				}
 			}
-			
-			// Otherwise, create a new route
-			else
-			{
-				Routes.add( new Route( ThisRouter, NewLink.Node, NewLink.Node, NewLink.Cost ) );
-			}*/
 		}
 		
 
-		System.out.println("Done");
-		System.out.println("Found " + NumberOfLinks + " links");
+		System.out.println( "Updating links complete" );
+		System.out.println();
+		
 		PrintRoutingTable();
 		
 
-		if( LinkChanged ){
+		if( LinkChanged )
+		{
+			System.out.println("Link change found, sending broadcast");
 			Broadcast();
 		}
 	}
@@ -470,15 +466,25 @@ public class RouterThread extends Thread
 	 */
 	synchronized public void PrintRoutingTable()
 	{
-		System.out.println( "" );
-		System.out.println( "***** Routing Table *****" );
+		System.out.println( "Routing Table - " + CurrentTime() );
 
 		// Loop through the routes
-		for( int RouteNum = 0; RouteNum < Routes.size(); RouteNum++ )
+		// Skip the first route, this is the current router to itself
+		for( int RouteNum = 1; RouteNum < Routes.size(); RouteNum++ )
 		{
 			// Print the current route
 			System.out.println( Routes.get( RouteNum ) );
 		}
 		System.out.println( "" );	
+	}
+	
+	
+	
+	/*
+	 * Returns the current time, in the format HH:mm:ss.SSS
+	 */
+	public String CurrentTime()
+	{
+		return new java.text.SimpleDateFormat("HH:mm:ss.SSS").format(new java.util.Date());
 	}
 }
